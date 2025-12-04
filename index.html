@@ -42,6 +42,11 @@
 
   .card-sep{ border-color: rgba(255,255,255,.12); }
   body.light .card-sep{ border-color:#e5e7eb; }
+
+  /* Controls */
+  .ctrl{ height: 44px; }
+  .tag{ padding:.25rem .6rem; border-radius:9999px; font-size:.72rem; border:1px solid #ffffff22 }
+  body.light .tag{ border-color:#e5e7eb }
 </style>
 </head>
 
@@ -60,23 +65,60 @@
 </header>
 
 <main class="max-w-6xl mx-auto px-4 pb-20">
-  <!-- Party Key display (read-only) -->
-  <section id="searchCard" class="glass dark rounded-3xl p-6 sm:p-8 shadow-2xl transition">
-    <div class="grid sm:grid-cols-5 gap-4 items-end">
-      <div class="sm:col-span-4">
-        <label class="block text-sm mb-1 opacity-80">Party Link Code</label>
-        <input id="partyKeyInput" class="w-full glass dark rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-sky-400 placeholder:text-slate-400 transition" placeholder="e.g. SINGLA" disabled/>
+
+  <!-- Filters (Customer/Party input removed) -->
+  <section id="filtersCard" class="glass dark rounded-3xl p-6 sm:p-8 shadow-2xl transition">
+    <div class="grid sm:grid-cols-6 gap-3 items-end">
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">Item</label>
+        <select id="fItem" class="ctrl w-full glass dark rounded-2xl px-3 outline-none"></select>
       </div>
-      <div class="sm:col-span-1">
-        <button id="btnReload" class="w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold py-3 transition glass dark">Reload</button>
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">Colour</label>
+        <select id="fColour" class="ctrl w-full glass dark rounded-2xl px-3 outline-none"></select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">Status</label>
+        <select id="fStatus" class="ctrl w-full glass dark rounded-2xl px-3 outline-none">
+          <option value="">All</option>
+          <option>IN PROCESS</option>
+          <option>READY</option>
+          <option>DELAYED</option>
+          <option>DISPATCHED</option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">PI No</label>
+        <select id="fPI" class="ctrl w-full glass dark rounded-2xl px-3 outline-none"></select>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">From</label>
+        <input type="date" id="fFrom" class="ctrl w-full glass dark rounded-2xl px-3 outline-none" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs mb-1 opacity-80">To</label>
+        <input type="date" id="fTo" class="ctrl w-full glass dark rounded-2xl px-3 outline-none" />
+      </div>
+
+      <div class="sm:col-span-4">
+        <label class="block text-xs mb-1 opacity-80">Search (Item / Colour / PI / Remarks)</label>
+        <input id="fSearch" class="ctrl w-full glass dark rounded-2xl px-4 outline-none" placeholder="Type to search…" />
+      </div>
+      <div class="sm:col-span-2">
+        <button id="btnClear" class="w-full ctrl rounded-2xl bg-slate-200/20 hover:bg-slate-200/30 text-sm font-semibold transition glass dark">Clear Filters</button>
       </div>
     </div>
-    <p class="text-xs mt-2 opacity-70">Ye page hamesha aapke personal link se open karein (e.g. <code>?party=SINGLA</code>).</p>
+    <p class="text-xs mt-2 opacity-70">Ye filters sirf aapke personal data par apply hote hain. Customer/party change karne ka koi option nahi hai.</p>
   </section>
 
+  <!-- Summary -->
   <section id="summary" class="mt-6 hidden fade-in"></section>
+
+  <!-- Active Results -->
   <section id="results" class="mt-4 space-y-4"></section>
 
+  <!-- Loader -->
   <div id="loader" class="mt-10 flex items-center gap-3 opacity-80 hidden">
     <svg class="ico-gear" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" stroke="currentColor" stroke-width="1.8"/>
@@ -84,6 +126,7 @@
     </svg>
     <span>Loading…</span>
   </div>
+
 </main>
 
 <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">© RK KNIT FAB — Live Status</footer>
@@ -105,11 +148,17 @@ btnTheme.addEventListener('click', ()=> applyTheme(body.classList.contains('dark
 
 /* ===== ELEMENTS ===== */
 const els = {
-  partyKeyInput: document.getElementById('partyKeyInput'),
-  btnReload: document.getElementById('btnReload'),
   results: document.getElementById('results'),
   loader: document.getElementById('loader'),
-  summary: document.getElementById('summary')
+  summary: document.getElementById('summary'),
+  fItem: document.getElementById('fItem'),
+  fColour: document.getElementById('fColour'),
+  fStatus: document.getElementById('fStatus'),
+  fPI: document.getElementById('fPI'),
+  fFrom: document.getElementById('fFrom'),
+  fTo: document.getElementById('fTo'),
+  fSearch: document.getElementById('fSearch'),
+  btnClear: document.getElementById('btnClear'),
 };
 
 /* ===== ICONS ===== */
@@ -130,31 +179,43 @@ function statusMeta(s){
 }
 function fmtDate(v){ if(!v) return ''; const d=new Date(v); return isNaN(d)?v:d.toLocaleDateString(); }
 function groupByPI(rows){ const m={}; rows.forEach(r=>{ const k=r['PI_No']||'NO-PI'; (m[k]=m[k]||[]).push(r);}); return m; }
+function unique(list){ return Array.from(new Set(list.filter(x=>x!=null && x!==''))).sort((a,b)=>String(a).localeCompare(String(b))); }
 
-/* ===== PARTY KEY FROM URL ===== */
+/* ===== PARTY KEY FROM URL (hidden, no UI) ===== */
 const params = new URLSearchParams(location.search);
 const partyKey = (params.get('party') || '').trim().toUpperCase();
-els.partyKeyInput.value = partyKey || '';
-if (!partyKey) {
-  document.getElementById('results').innerHTML = `
-    <div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-3xl p-6 text-rose-400 text-center text-lg">
-      ❌ Missing Party Identity<br><span class="text-sm opacity-70">Open your personal link with <code>?party=YOURCODE</code></span>
-    </div>`;
-}
+
+/* ===== DATA STATE ===== */
+let masterRows = []; // all rows for this party
+let filteredRows = []; // rows after filters
 
 /* ===== LOAD DATA ===== */
 async function load(){
-  if (!partyKey) return;
+  if (!partyKey){
+    els.results.innerHTML = `<div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-3xl p-6 text-rose-400 text-center text-lg">❌ Personal link missing. Contact support.</div>`;
+    return;
+  }
   els.results.innerHTML=''; els.summary.classList.add('hidden'); els.loader.classList.remove('hidden');
-  const url=new URL(API); url.searchParams.set('party', partyKey);
   try{
+    const url=new URL(API); url.searchParams.set('party', partyKey);
     const res=await fetch(url.toString(),{mode:'cors'});
     const json=await res.json();
-    if (json.error){ // unauthorized or missing
+    if (json.error){
       els.results.innerHTML = `<div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-2xl p-6 text-rose-400 text-center text-lg">❌ ${json.error}</div>`;
       return;
     }
-    render(json);
+    masterRows = json.data || [];
+    buildFilters(masterRows);
+    applyFilters(); // sets filteredRows + render
+    // Summary
+    const totalQty = masterRows.reduce((s,r)=> s + (Number(r['Qty'])||0), 0);
+    els.summary.innerHTML = `
+      <div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-3xl p-5 grid sm:grid-cols-3 gap-4">
+        <div><div class="text-xs opacity-70">Party</div><div class="text-lg font-semibold">${json.party_name||'-'}</div></div>
+        <div><div class="text-xs opacity-70">Records</div><div class="text-lg font-semibold">${masterRows.length}</div></div>
+        <div><div class="text-xs opacity-70">Total Qty</div><div class="text-lg font-semibold">${totalQty}</div></div>
+      </div>`;
+    els.summary.classList.remove('hidden');
   }catch(e){
     els.results.innerHTML = `<div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-2xl p-6 text-rose-400">Error loading data.</div>`;
   }finally{
@@ -162,33 +223,72 @@ async function load(){
   }
 }
 
-function render(json){
-  const rows = json.data || [];
+/* ===== BUILD FILTERS ===== */
+function setOptions(sel, values, includeAll=true, labelAll='All'){
+  const cur = sel.value;
+  sel.innerHTML = '';
+  if (includeAll) sel.innerHTML += `<option value="">${labelAll}</option>`;
+  values.forEach(v => sel.innerHTML += `<option>${String(v)}</option>`);
+  // try keep previous selection
+  const has = Array.from(sel.options).some(o=>o.value===cur);
+  if (has) sel.value = cur;
+}
+function buildFilters(rows){
+  setOptions(els.fItem, unique(rows.map(r=>r['Item'])));
+  setOptions(els.fColour, unique(rows.map(r=>r['Colour'])));
+  setOptions(els.fPI, unique(rows.map(r=>r['PI_No'])));
+}
+
+/* ===== APPLY FILTERS ===== */
+function normalize(str){ return (str||'').toString().toLowerCase(); }
+function applyFilters(){
+  const vItem = els.fItem.value;
+  const vColour = els.fColour.value;
+  const vStatus = els.fStatus.value;
+  const vPI = els.fPI.value;
+  const vFrom = els.fFrom.value ? new Date(els.fFrom.value) : null;
+  const vTo = els.fTo.value ? new Date(els.fTo.value) : null;
+  const q = normalize(els.fSearch.value);
+
+  filteredRows = masterRows.filter(r=>{
+    if (vItem && String(r['Item'])!==vItem) return false;
+    if (vColour && String(r['Colour'])!==vColour) return false;
+    if (vStatus && statusMeta(r['Status']).label !== vStatus) return false;
+    if (vPI && String(r['PI_No'])!==vPI) return false;
+
+    // Date range on r['Date']
+    if (vFrom || vTo){
+      const d = r['Date'] ? new Date(r['Date']) : null;
+      if (!d || isNaN(d)) return false;
+      if (vFrom && d < vFrom) return false;
+      if (vTo && d > vTo) return false;
+    }
+
+    if (q){
+      const hay = [
+        r['Item'], r['Colour'], r['PI_No'], r['Status'], r['Remarks']
+      ].map(normalize).join(' ');
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  render(filteredRows);
+}
+
+/* ===== RENDER ===== */
+function render(rows){
   if (!rows.length){
     els.results.innerHTML = `
       <div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-2xl p-8 flex items-center gap-4">
         ${iconSVG('clock',26)}
         <div>
-          <div class="font-semibold">No records found</div>
-          <div class="text-sm opacity-70">Try later or contact support.</div>
+          <div class="font-semibold">No matching records</div>
+          <div class="text-sm opacity-70">Adjust filters to see results.</div>
         </div>
       </div>`;
     return;
   }
-
-  const totalQty = rows.reduce((s,r)=> s + (Number(r['Qty'])||0), 0);
-  const statusCounts = rows.reduce((m,r)=>{ const k=statusMeta(r['Status']).label; m[k]=(m[k]||0)+1; return m; },{});
-
-  els.summary.innerHTML = `
-    <div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-3xl p-5 grid sm:grid-cols-4 gap-4">
-      <div><div class="text-xs opacity-70">Party</div><div class="text-lg font-semibold">${json.party_name||'-'}</div></div>
-      <div><div class="text-xs opacity-70">Records</div><div class="text-lg font-semibold">${rows.length}</div></div>
-      <div><div class="text-xs opacity-70">Total Qty</div><div class="text-lg font-semibold">${totalQty}</div></div>
-      <div class="flex gap-2 flex-wrap items-center">
-        ${Object.entries(statusCounts).map(([k,v])=>`<span class="chip glass ${body.classList.contains('dark')?'dark':'light'}">${k}: ${v}</span>`).join('')}
-      </div>
-    </div>`;
-  els.summary.classList.remove('hidden');
 
   const groups = groupByPI(rows);
   els.results.innerHTML = Object.keys(groups).map(pi=>{
@@ -237,8 +337,36 @@ function render(json){
 }
 
 /* ===== EVENTS ===== */
-document.getElementById('btnReload').addEventListener('click', load);
-if (partyKey) load(); // auto-load if key present
+['change','input'].forEach(ev=>{
+  els.fItem.addEventListener(ev, applyFilters);
+  els.fColour.addEventListener(ev, applyFilters);
+  els.fStatus.addEventListener(ev, applyFilters);
+  els.fPI.addEventListener(ev, applyFilters);
+  els.fFrom.addEventListener(ev, applyFilters);
+  els.fTo.addEventListener(ev, applyFilters);
+  els.fSearch.addEventListener(ev, debounce(applyFilters, 200));
+});
+els.btnClear.addEventListener('click', ()=>{
+  els.fItem.value = '';
+  els.fColour.value = '';
+  els.fStatus.value = '';
+  els.fPI.value = '';
+  els.fFrom.value = '';
+  els.fTo.value = '';
+  els.fSearch.value = '';
+  applyFilters();
+});
+
+/* ===== Debounce ===== */
+function debounce(fn, delay){
+  let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), delay); };
+}
+
+/* ===== INIT ===== */
+if (partyKey) load();
+else {
+  els.results.innerHTML = `<div class="glass ${body.classList.contains('dark')?'dark':'light'} rounded-3xl p-6 text-rose-400 text-center text-lg">❌ Personal link missing. Contact support.</div>`;
+}
 </script>
 
 </body>
