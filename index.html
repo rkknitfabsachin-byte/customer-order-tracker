@@ -4,81 +4,88 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Order Tracker — RK KNIT FAB</title>
-<!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
+
 <style>
-  /* Background aur glass effect */
-  body{
+  /* dark mode background */
+  body.dark{
     background: radial-gradient(1200px 600px at 10% -10%, #7dd3fc44, transparent),
                 radial-gradient(1000px 600px at 110% 10%, #c084fc33, transparent),
                 linear-gradient(180deg,#0b1220,#0b1220 40%,#0e1426 100%);
+    color: #e2e8f0;
   }
-  .glass{ backdrop-filter: blur(12px); background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12) }
+  /* light mode background */
+  body.light{
+    background: #f8fafc;
+    color: #1e293b;
+  }
 
-  /* Status chips */
+  .glass.dark{ backdrop-filter: blur(12px); background: rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); }
+  .glass.light{ background: #ffffffdd; backdrop-filter: blur(8px); border:1px solid #e2e8f0; }
+
+  /* status chips */
   .chip{ padding:.2rem .6rem; border-radius:9999px; font-weight:600; font-size:.75rem; letter-spacing:.02em }
   .st-process{ color:#e5f2ff; background:#1d4ed8; }
   .st-ready{ color:#041b06; background:#34d399; }
   .st-delayed{ color:#3b0a0a; background:#fca5a5; }
   .st-dispatched{ color:#0a0f1e; background:#93c5fd; }
 
-  /* Animations */
-  @keyframes spin { to { transform: rotate(360deg);} }
-  @keyframes pulse { 0%,100%{ transform: scale(1);} 50%{ transform: scale(1.08);} }
-  @keyframes shake { 0%,100%{ transform: translateX(0);} 25%{ transform: translateX(-4px);} 75%{ transform: translateX(4px);} }
-  @keyframes drive { 0%{ transform: translateX(-14px);} 100%{ transform: translateX(14px);} }
+  /* animations */
+  @keyframes spin{ to{ transform: rotate(360deg);} }
+  @keyframes pulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-3px);} 75%{transform:translateX(3px);} }
+  @keyframes drive{ 0%{transform:translateX(-12px);}100%{transform:translateX(12px);} }
 
   .ico-gear{ animation: spin 1.4s linear infinite; }
-  .ico-check{ animation: pulse 1.6s ease-in-out infinite; transform-origin: center; }
+  .ico-check{ animation: pulse 1.6s ease-in-out infinite; }
   .ico-clock{ animation: shake 1.2s ease-in-out infinite; }
   .ico-truck{ animation: drive 1.2s ease-in-out infinite alternate; }
 
-  /* subtle enter animation */
-  @keyframes fadeSlide { from{ opacity:0; transform: translateY(10px);} to{ opacity:1; transform:none;} }
-  .fade-in { animation: fadeSlide .45s ease both; }
+  @keyframes fadeSlide{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:none;} }
+  .fade-in{ animation: fadeSlide .45s ease both; }
 </style>
 </head>
-<body class="min-h-screen text-slate-100">
 
-<header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-      🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
-    </h1>
-    <a href="https://github.com/" target="_blank" class="text-xs opacity-70 hover:opacity-100">Hosted on GitHub Pages</a>
-  </div>
+<body class="dark min-h-screen transition-colors duration-300">
+
+<!-- HEADER -->
+<header class="max-w-6xl mx-auto px-4 pt-10 pb-6 flex items-center justify-between">
+  <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
+    🧵 RK KNIT FAB — <span class="text-sky-300 dark:text-sky-300 light:text-sky-600">Order Tracker</span>
+  </h1>
+
+  <!-- Theme toggle -->
+  <button id="themeToggle"
+    class="px-4 py-2 rounded-xl glass dark hover:bg-white/10 light:hover:bg-slate-200 transition text-sm">
+    🌙 Dark
+  </button>
 </header>
 
+<!-- MAIN -->
 <main class="max-w-6xl mx-auto px-4 pb-20">
-  <!-- Search card -->
-  <section class="glass rounded-3xl p-5 sm:p-8 shadow-2xl">
-    <div class="grid sm:grid-cols-6 gap-4 items-end">
-      <div class="sm:col-span-3">
+
+  <!-- Search Card (PI removed) -->
+  <section id="searchCard" class="glass dark rounded-3xl p-6 shadow-2xl transition">
+    <div class="grid sm:grid-cols-5 gap-4 items-end">
+      <div class="sm:col-span-4">
         <label class="block text-sm mb-1 opacity-80">Customer Name</label>
-        <input id="customer" class="w-full glass rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-sky-400 placeholder:text-slate-400"
+        <input id="customer"
+          class="w-full glass dark rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-sky-400 placeholder:text-slate-400 transition"
           placeholder="e.g. SINGLA TRADING COMP"/>
       </div>
-      <div class="sm:col-span-2">
-        <label class="block text-sm mb-1 opacity-80">PI No (optional)</label>
-        <input id="pino" class="w-full glass rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-sky-400" placeholder="PI-052"/>
-      </div>
       <div class="sm:col-span-1">
-        <button id="btnSearch" class="w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold py-3 transition glass">
+        <button id="btnSearch"
+          class="w-full rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold py-3 transition glass dark">
           Search
         </button>
       </div>
     </div>
-
-    <p id="hint" class="text-xs mt-2 opacity-70">Tip: exact ya partial name chalega. Default: “SINGLA TRADING COMP”.</p>
+    <p class="text-xs mt-2 opacity-70">Tip: partial name bhi chalega.</p>
   </section>
 
-  <!-- Summary -->
   <section id="summary" class="mt-6 hidden fade-in"></section>
-
-  <!-- Results -->
   <section id="results" class="mt-4 space-y-4"></section>
 
-  <!-- Empty / loader -->
   <div id="loader" class="mt-10 flex items-center gap-3 opacity-80 hidden">
     <svg class="ico-gear" width="24" height="24" viewBox="0 0 24 24" fill="none">
       <path d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" stroke="currentColor" stroke-width="1.8"/>
@@ -90,184 +97,154 @@
 </main>
 
 <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">
-  © RK KNIT FAB — live status for customers
+  © RK KNIT FAB — Live Status
 </footer>
 
 <script>
-  const API = 'https://script.google.com/macros/s/AKfycbzrnCR5_bVL94HnEO4YtvJcj-CFUh6q4NoepORX0dvivJIx9vd3tGZL5F_9401p3LgQ/exec'; // <-- replace with your Apps Script Web App URL
+const API = 'https://script.google.com/macros/s/AKfycbzrnCR5_bVL94HnEO4YtvJcj-CFUh6q4NoepORX0dvivJIx9vd3tGZL5F_9401p3LgQ/exec';  // <-- replace this
 
-  const els = {
-    customer: document.getElementById('customer'),
-    pino: document.getElementById('pino'),
-    btn: document.getElementById('btnSearch'),
-    results: document.getElementById('results'),
-    loader: document.getElementById('loader'),
-    summary: document.getElementById('summary')
-  };
+// theme setup
+const body = document.body;
+const btnTheme = document.getElementById('themeToggle');
 
-  // default value for your usual customer
-  els.customer.value = 'SINGLA TRADING COMP';
+function applyTheme(t){
+  body.classList.remove('dark','light');
+  body.classList.add(t);
+  document.querySelectorAll('.glass').forEach(el=>{
+    el.classList.remove('dark','light');
+    el.classList.add(t);
+  });
+  btnTheme.textContent = t === 'dark' ? '🌙 Dark' : '☀️ Light';
+  localStorage.setItem('theme',t);
+}
 
-  function statusMeta(s){
-    const t = (s || '').toString().trim().toUpperCase();
-    if (t === 'READY')        return {label:'READY',        chip:'st-ready',      icon:'check'};
-    if (t === 'DELAYED')      return {label:'DELAYED',      chip:'st-delayed',    icon:'clock'};
-    if (t === 'DISPATCHED')   return {label:'DISPATCHED',   chip:'st-dispatched', icon:'truck'};
-    return {label: 'IN PROCESS', chip:'st-process', icon:'gear'}; // default
+const saved = localStorage.getItem('theme') || 'dark';
+applyTheme(saved);
+
+btnTheme.onclick = () =>{
+  applyTheme(body.classList.contains('dark') ? 'light' : 'dark');
+};
+
+// UI elements
+const els = {
+  customer: document.getElementById('customer'),
+  btn: document.getElementById('btnSearch'),
+  results: document.getElementById('results'),
+  loader: document.getElementById('loader'),
+  summary: document.getElementById('summary')
+};
+
+// default customer
+els.customer.value = 'SINGLA TRADING COMP';
+
+// status metadata
+function statusMeta(s){
+  const t = (s||'').toUpperCase();
+  if (t==='READY') return {label:'READY', chip:'st-ready', icon:'check'};
+  if (t==='DELAYED') return {label:'DELAYED', chip:'st-delayed', icon:'clock'};
+  if (t==='DISPATCHED') return {label:'DISPATCHED', chip:'st-dispatched', icon:'truck'};
+  return {label:'IN PROCESS', chip:'st-process', icon:'gear'};
+}
+
+function iconSVG(kind,size=22){
+  if (kind==='check') return `<svg class="ico-check" width="${size}" height="${size}" ...>...</svg>`;
+  if (kind==='clock') return `<svg class="ico-clock" width="${size}" height="${size}" ...>...</svg>`;
+  if (kind==='truck') return `<svg class="ico-truck" width="${size}" height="${size}" ...>...</svg>`;
+  return `<svg class="ico-gear" width="${size}" height="${size}" ...>...</svg>`;
+}
+
+function fmtDate(v){
+  if(!v) return '';
+  const d = new Date(v);
+  return isNaN(d)?v:d.toLocaleDateString();
+}
+
+// group by PI
+function groupByPI(rows){
+  const m={};
+  rows.forEach(r=>{
+    const k=r['PI_No']||'NO-PI';
+    (m[k]=m[k]||[]).push(r);
+  });
+  return m;
+}
+
+async function load(){
+  els.results.innerHTML='';
+  els.summary.classList.add('hidden');
+  els.loader.classList.remove('hidden');
+
+  const c=els.customer.value.trim();
+  const url=new URL(API);
+  if(c) url.searchParams.set('customer',c);
+
+  try{
+    const res=await fetch(url,{mode:'cors'});
+    const json=await res.json();
+    render(json.data||[]);
+  }catch(e){
+    els.results.innerHTML=`<div class="glass rounded-2xl p-6 text-rose-300">Error loading data</div>`;
+  }finally{
+    els.loader.classList.add('hidden');
+  }
+}
+
+function render(rows){
+  if(!rows.length){
+    els.results.innerHTML = `<div class="glass rounded-2xl p-6">No records found.</div>`;
+    return;
   }
 
-  function iconSVG(kind, size=22){
-    if (kind==='check') return `
-      <svg class="ico-check" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M20 7L10 17l-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
-    if (kind==='clock') return `
-      <svg class="ico-clock" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/>
-        <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>`;
-    if (kind==='truck') return `
-      <svg class="ico-truck" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
-        <path d="M2 7h11v8H2zM13 10h4l3 3v2h-7" stroke="currentColor" stroke-width="2" fill="none"/>
-        <circle cx="6" cy="17" r="2" stroke="currentColor" stroke-width="2"/>
-        <circle cx="17" cy="17" r="2" stroke="currentColor" stroke-width="2"/>
-      </svg>`;
-    // gear
+  // summary
+  const total = rows.reduce((s,r)=>s+(+r['Qty']||0),0);
+  els.summary.innerHTML = `
+    <div class="glass rounded-3xl p-5 grid sm:grid-cols-3 gap-4 fade-in">
+      <div><div class="text-xs opacity-60">Customer</div><div class="text-lg font-semibold">${rows[0]['Customer_Name']}</div></div>
+      <div><div class="text-xs opacity-60">Records</div><div class="text-lg font-semibold">${rows.length}</div></div>
+      <div><div class="text-xs opacity-60">Total Qty</div><div class="text-lg font-semibold">${total}</div></div>
+    </div>`;
+  els.summary.classList.remove('hidden');
+
+  // group by PI No
+  const groups=groupByPI(rows);
+  els.results.innerHTML=Object.keys(groups).map(pi=>{
+    const items=groups[pi];
+    const head=items[0];
     return `
-      <svg class="ico-gear" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none">
-        <path d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M4 12h2M18 12h2M12 4v2M12 18v2M17 7l-1.4 1.4M8.4 16.6 7 18M7 7l1.4 1.4M16.6 16.6 18 18" stroke="currentColor" stroke-width="1.8"/>
-      </svg>`;
-  }
-
-  function groupByPI(rows){
-    const map = {};
-    rows.forEach(r => {
-      const k = (r['PI_No'] || 'NO-PI');
-      map[k] = map[k] || [];
-      map[k].push(r);
-    });
-    return map;
-  }
-
-  function fmtDate(v){
-    try {
-      if (!v) return '';
-      const d = new Date(v);
-      if (isNaN(d)) return v;
-      return d.toLocaleDateString();
-    } catch { return v; }
-  }
-
-  async function load(){
-    const c = els.customer.value.trim();
-    const pi = els.pino.value.trim();
-    els.results.innerHTML = '';
-    els.summary.classList.add('hidden');
-    els.loader.classList.remove('hidden');
-
-    const url = new URL(API);
-    if (c) url.searchParams.set('customer', c);
-    if (pi) url.searchParams.set('pi', pi);
-
-    try{
-      const res = await fetch(url.toString(), {mode:'cors'});
-      const json = await res.json();
-      render(json.data || []);
-    }catch(e){
-      els.results.innerHTML = `<div class="glass rounded-2xl p-6 text-rose-300">Error loading data. Check API URL / permissions.</div>`;
-    }finally{
-      els.loader.classList.add('hidden');
-    }
-  }
-
-  function render(rows){
-    if (!rows.length){
-      els.results.innerHTML = `
-        <div class="glass rounded-2xl p-8 flex items-center gap-4">
-          ${iconSVG('clock',26)}
-          <div>
-            <div class="font-semibold">No records found</div>
-            <div class="text-sm opacity-70">Try another customer name or PI No.</div>
-          </div>
-        </div>`;
-      return;
-    }
-
-    // summary
-    const totalQty = rows.reduce((s,r)=> s + (Number(r['Qty'])||0), 0);
-    const statusCounts = rows.reduce((m,r)=>{ const k = statusMeta(r['Status']).label; m[k]=(m[k]||0)+1; return m; },{});
-    els.summary.innerHTML = `
-      <div class="glass rounded-3xl p-5 grid sm:grid-cols-4 gap-4">
-        <div><div class="text-xs opacity-70">Customer</div><div class="text-lg font-semibold">${rows[0]['Customer_Name']||'-'}</div></div>
-        <div><div class="text-xs opacity-70">Records</div><div class="text-lg font-semibold">${rows.length}</div></div>
-        <div><div class="text-xs opacity-70">Total Qty</div><div class="text-lg font-semibold">${totalQty}</div></div>
-        <div class="flex gap-2 flex-wrap items-center">
-          ${Object.entries(statusCounts).map(([k,v])=>`<span class="chip glass">${k}: ${v}</span>`).join('')}
-        </div>
-      </div>`;
-    els.summary.classList.remove('hidden');
-
-    // group by PI_No
-    const groups = groupByPI(rows);
-    const cards = Object.keys(groups).map(pi=>{
-      const items = groups[pi];
-      const head = items[0];
-      const expected = head['Expected_Delivery'] ? fmtDate(head['Expected_Delivery']) : '-';
-      const lastUpd = head['Last_Updated'] ? fmtDate(head['Last_Updated']) : '-';
-
-      const rowsHtml = items.map(r=>{
-        const m = statusMeta(r['Status']);
-        return `
-        <div class="grid grid-cols-12 items-center py-3 px-3 rounded-xl hover:bg-white/5 transition fade-in">
-          <div class="col-span-4 md:col-span-3 flex items-center gap-3">
-            <div class="w-7 h-7 flex items-center justify-center">${iconSVG(m.icon,22)}</div>
-            <div>
-              <div class="font-medium">${r['Item']||'-'}</div>
-              <div class="text-xs opacity-60">${r['Colour']||'-'}</div>
+    <div class="glass rounded-3xl fade-in overflow-hidden">
+      <div class="p-5 border-b border-white/10 flex justify-between">
+        <div class="text-xl font-bold">PI: ${pi}</div>
+        <div class="text-xs opacity-60">Expected: ${fmtDate(head['Expected_Delivery'])}</div>
+      </div>
+      <div class="p-3 divide-y divide-white/10">
+        ${items.map(r=>{
+          const m=statusMeta(r['Status']);
+          return `
+          <div class="grid grid-cols-12 items-center py-3 px-3">
+            <div class="col-span-4 flex items-center gap-3">
+              ${iconSVG(m.icon,22)}
+              <div>
+                <div class="font-medium">${r['Item']}</div>
+                <div class="text-xs opacity-60">${r['Colour']}</div>
+              </div>
             </div>
-          </div>
-          <div class="col-span-3 md:col-span-2 text-sm">${fmtDate(r['Date'])}</div>
-          <div class="col-span-2 md:col-span-2 text-sm">${r['Qty']||'-'}</div>
-          <div class="col-span-3 md:col-span-3">
-            <span class="chip ${m.chip}">${m.label}</span>
-          </div>
-          <div class="hidden md:block md:col-span-2 text-xs opacity-70 text-right">${r['Remarks']||''}</div>
-        </div>`;
-      }).join('');
+            <div class="col-span-3 text-sm">${fmtDate(r['Date'])}</div>
+            <div class="col-span-2 text-sm">${r['Qty']}</div>
+            <div class="col-span-3">
+              <span class="chip ${m.chip}">${m.label}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
 
-      return `
-      <div class="glass rounded-3xl overflow-hidden">
-        <div class="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/10">
-          <div class="flex items-center gap-3">
-            <div class="text-xl font-bold tracking-wide">PI: ${pi}</div>
-            <div class="text-xs opacity-70">Expected: ${expected}</div>
-          </div>
-          <div class="text-xs opacity-60">Last Updated: ${lastUpd}</div>
-        </div>
-        <div class="p-3 divide-y divide-white/10">
-          <div class="grid grid-cols-12 px-3 py-2 text-xs uppercase tracking-wider opacity-60">
-            <div class="col-span-4 md:col-span-3">Item</div>
-            <div class="col-span-3 md:col-span-2">Date</div>
-            <div class="col-span-2 md:col-span-2">Qty</div>
-            <div class="col-span-3 md:col-span-3">Status</div>
-            <div class="hidden md:block md:col-span-2 text-right">Remarks</div>
-          </div>
-          ${rowsHtml}
-        </div>
-      </div>`;
-    }).join('');
-
-    els.results.innerHTML = cards;
-  }
-
-  // events
-  els.btn.addEventListener('click', load);
-  els.customer.addEventListener('keydown', e=>{ if(e.key==='Enter') load(); });
-  els.pino.addEventListener('keydown', e=>{ if(e.key==='Enter') load(); });
-
-  // auto-load default on first open
-  load();
+// events
+els.btn.onclick=load;
+els.customer.onkeydown=e=>{ if(e.key==='Enter') load(); };
+load();
 </script>
+
 </body>
 </html>
