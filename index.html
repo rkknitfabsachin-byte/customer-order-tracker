@@ -21,17 +21,17 @@ body.light{ background:#f7fbff; color:#0f172a; }
 .glass.light{ background:#ffffffee; backdrop-filter: blur(10px); border:1px solid #e2e8f0; }
 
 /* ===== STATUS CHIPS ===== */
-.chip{ padding:.22rem .65rem; border-radius:9999px; font-weight:700; font-size:.72rem }
-.st-process{ background:#1d4ed8; color:#e5f2ff }
+.chip{ padding:.25rem .7rem; border-radius:9999px; font-weight:700; font-size:.72rem }
+.st-process{ background:#2563eb; color:#e5f2ff }
 .st-ready{ background:#34d399; color:#052e18 }
 .st-delayed{ background:#fca5a5; color:#3b0a0a }
 .st-dispatched{ background:#93c5fd; color:#081225 }
 
 /* ===== ANIMATIONS ===== */
 @keyframes spin{ to{ transform:rotate(360deg)} }
-@keyframes pulse{ 0%,100%{transform:scale(1)}50%{transform:scale(1.1)} }
+@keyframes pulse{ 0%,100%{transform:scale(1)}50%{transform:scale(1.08)} }
 @keyframes shake{ 0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)} }
-@keyframes drive{ 0%{transform:translateX(-10px)}100%{transform:translateX(10px)} }
+@keyframes drive{ 0%{transform:translateX(-12px)}100%{transform:translateX(12px)} }
 
 .ico-gear{ animation:spin 1.4s linear infinite }
 .ico-check{ animation:pulse 1.6s ease-in-out infinite }
@@ -42,13 +42,15 @@ body.light{ background:#f7fbff; color:#0f172a; }
 
 <body class="dark min-h-screen transition-colors duration-300">
 
-<!-- ===== HEADER / BRANDING ===== -->
+<!-- ===== HEADER ===== -->
 <header class="max-w-6xl mx-auto px-4 pt-8 pb-6">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl sm:text-3xl font-bold">
       🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
     </h1>
-    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">🌙 Dark</button>
+    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">
+      🌙 Dark
+    </button>
   </div>
 </header>
 
@@ -70,6 +72,7 @@ body.light{ background:#f7fbff; color:#0f172a; }
   </div>
 </section>
 
+<!-- ===== RESULTS ===== -->
 <section id="results" class="space-y-4"></section>
 
 </main>
@@ -125,7 +128,7 @@ let master=[];
 
 function buildPI(rows){
   const pis=[...new Set(rows.map(r=>r.PI_No).filter(Boolean))];
-  fPI.innerHTML=`<option value=\"\">All</option>`+pis.map(p=>`<option>${p}</option>`).join('');
+  fPI.innerHTML=`<option value="">All</option>`+pis.map(p=>`<option>${p}</option>`).join('');
 }
 
 function applyFilters(){
@@ -148,6 +151,15 @@ function render(rows){
   results.innerHTML=Object.keys(groups).map(pi=>`
     <div class="glass dark rounded-3xl overflow-hidden">
       <div class="p-4 border-b border-white/10 font-bold">PI: ${pi}</div>
+
+      <!-- COLUMN HEADINGS -->
+      <div class="grid grid-cols-12 px-4 py-2 text-xs uppercase tracking-wider opacity-60 border-b border-white/10">
+        <div class="col-span-5">Item</div>
+        <div class="col-span-3 text-center">Date</div>
+        <div class="col-span-2 text-center">Qty</div>
+        <div class="col-span-2 text-center">Status</div>
+      </div>
+
       <div class="divide-y border-white/10">
         ${groups[pi].map(r=>{
           const m=statusMeta(r.Status);
@@ -156,11 +168,13 @@ function render(rows){
             <div class="col-span-5">
               <div class="font-semibold">${r.Item||'-'}</div>
               <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-              <div class="text-xs opacity-70 mt-1">Expected: ${fmtDate(r.Expected_Delivery)}</div>
+              <div class="text-xs opacity-70 mt-1">
+                Expected delivery: ${fmtDate(r.Expected_Delivery)}
+              </div>
             </div>
-            <div class="col-span-3">${fmtDate(r.Date)}</div>
-            <div class="col-span-2">${r.Qty||'-'}</div>
-            <div class="col-span-2 flex items-center gap-2">
+            <div class="col-span-3 text-center">${fmtDate(r.Date)}</div>
+            <div class="col-span-2 text-center">${r.Qty||'-'}</div>
+            <div class="col-span-2 flex items-center justify-center gap-2">
               <div class="${m.i}">
                 ${m.i==='ico-gear'?'⚙️':m.i==='ico-check'?'✔️':m.i==='ico-clock'?'⏰':'🚚'}
               </div>
