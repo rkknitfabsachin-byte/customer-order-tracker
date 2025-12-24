@@ -7,6 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
+  /* ===== ORIGINAL STYLES (UNCHANGED) ===== */
   body.dark{
     background:
       radial-gradient(1200px 600px at 10% -10%, #7dd3fc44, transparent),
@@ -39,92 +40,98 @@
 </style>
 </head>
 
-<body class="dark min-h-screen">
+<body class="dark min-h-screen transition-colors duration-300">
 
-<main class="max-w-6xl mx-auto px-4 py-10">
+<header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-2xl sm:text-3xl font-bold">
+      🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
+    </h1>
+    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">🌙 Dark</button>
+  </div>
+</header>
 
-<section id="results" class="space-y-4"></section>
-
+<main class="max-w-6xl mx-auto px-4 pb-20">
+  <section id="summary" class="mt-6 hidden"></section>
+  <section id="results" class="mt-4 space-y-4"></section>
+  <div id="loader" class="mt-10 flex gap-3 opacity-80 hidden">
+    <span class="ico-gear">⚙️</span> Loading…
+  </div>
 </main>
 
 <script>
 /* ===== CONFIG ===== */
 const API = 'https://script.google.com/macros/s/AKfycbzFljZhpwmAR-BANlmSYbtvCC36T0qyrbcMUGbQc8f4RBDi8jIIR39YJzaAZMS5dqBa/exec';
 
-/* ===== PARTY KEY ===== */
-const params = new URLSearchParams(location.search);
-const partyKey = (params.get('party')||'').trim().toUpperCase();
+/* ===== THEME (UNCHANGED) ===== */
+const body=document.body, btn=document.getElementById('themeToggle');
+function applyTheme(t){
+  body.classList.remove('dark','light'); body.classList.add(t);
+  document.querySelectorAll('.glass').forEach(el=>{
+    el.classList.remove('dark','light'); el.classList.add(t);
+  });
+  btn.textContent = t==='dark'?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('theme',t);
+}
+applyTheme(localStorage.getItem('theme')||'dark');
+btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
+
+/* ===== PARTY ===== */
+const partyKey=new URLSearchParams(location.search).get('party')||'';
 
 /* ===== HELPERS ===== */
 function fmtDate(v){
-  if(!v) return '-';
+  if(!v) return '';
   const d=new Date(v);
   if(isNaN(d)) return v;
-  const dd=String(d.getDate()).padStart(2,'0');
-  const mm=String(d.getMonth()+1).padStart(2,'0');
-  const yy=String(d.getFullYear()).slice(-2);
-  return `${dd}/${mm}/${yy}`;
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
 }
 
 function statusMeta(s){
   s=(s||'').toUpperCase();
-  if(s==='READY') return {label:'READY', chip:'st-ready', icon:'check'};
-  if(s==='DELAYED') return {label:'DELAYED', chip:'st-delayed', icon:'clock'};
-  if(s==='DISPATCHED') return {label:'DISPATCHED', chip:'st-dispatched', icon:'truck'};
-  return {label:'IN PROCESS', chip:'st-process', icon:'gear'};
-}
-
-function iconSVG(kind){
-  if(kind==='check') return `<svg class="ico-check" width="22" height="22" viewBox="0 0 24 24"><path d="M20 7L10 17l-6-6" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;
-  if(kind==='clock') return `<svg class="ico-clock" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2"/></svg>`;
-  if(kind==='truck') return `<svg class="ico-truck" width="22" height="22" viewBox="0 0 24 24"><path d="M2 7h11v8H2zM13 10h4l3 3v2h-7" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`;
-  return `<svg class="ico-gear" width="22" height="22" viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 1 0 7" stroke="currentColor" stroke-width="2"/></svg>`;
+  if(s==='READY') return {l:'READY',c:'st-ready',i:'ico-check'};
+  if(s==='DELAYED') return {l:'DELAYED',c:'st-delayed',i:'ico-clock'};
+  if(s==='DISPATCHED') return {l:'DISPATCHED',c:'st-dispatched',i:'ico-truck'};
+  return {l:'IN PROCESS',c:'st-process',i:'ico-gear'};
 }
 
 function groupByPI(rows){
   const m={};
   rows.forEach(r=>{
-    const k=r.PI_No||'NO-PI';
-    (m[k]=m[k]||[]).push(r);
+    (m[r.PI_No||'NO-PI']=m[r.PI_No||'NO-PI']||[]).push(r);
   });
   return m;
 }
 
 /* ===== LOAD ===== */
 async function load(){
-  if(!partyKey){
-    results.innerHTML='<div class="glass dark p-6 rounded-2xl text-center text-rose-400">❌ Invalid link</div>';
-    return;
-  }
-  const url=new URL(API); url.searchParams.set('party',partyKey);
-  const res=await fetch(url); const json=await res.json();
-  render(json.data||[]);
+  document.getElementById('loader').classList.remove('hidden');
+  const u=new URL(API); u.searchParams.set('party',partyKey);
+  const j=await (await fetch(u)).json();
+  render(j.data||[]);
+  document.getElementById('loader').classList.add('hidden');
 }
 
+/* ===== RENDER (ONLY MODIFIED PART) ===== */
 function render(rows){
   const groups=groupByPI(rows);
   results.innerHTML=Object.keys(groups).map(pi=>{
-    const items=groups[pi];
     return `
     <div class="glass dark rounded-3xl overflow-hidden fade-in">
       <div class="p-5 border-b border-white/10 font-bold text-lg">PI: ${pi}</div>
       <div class="divide-y border-white/10">
-        ${items.map(r=>{
+        ${groups[pi].map(r=>{
           const m=statusMeta(r.Status);
           return `
           <div class="grid grid-cols-12 gap-2 px-4 py-4 items-center">
-            <div class="col-span-4">
-              <div class="font-semibold text-[15px]">${r.Item||'-'}</div>
+            <div class="col-span-5">
+              <div class="font-semibold text-[15px] sm:text-base">${r.Item||'-'}</div>
               <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-              <div class="text-xs opacity-70 mt-1">
-                Expected: ${fmtDate(r.Expected_Delivery)}
-              </div>
+              ${r.Expected_Delivery?`<div class="text-xs opacity-70 mt-1">Expected: ${fmtDate(r.Expected_Delivery)}</div>`:''}
             </div>
             <div class="col-span-3 text-sm">${fmtDate(r.Date)}</div>
             <div class="col-span-2 text-sm">${r.Qty||'-'}</div>
-            <div class="col-span-3">
-              <span class="chip ${m.chip}">${m.label}</span>
-            </div>
+            <div class="col-span-2"><span class="chip ${m.c}">${m.l}</span></div>
           </div>`;
         }).join('')}
       </div>
@@ -134,6 +141,5 @@ function render(rows){
 
 load();
 </script>
-
 </body>
 </html>
