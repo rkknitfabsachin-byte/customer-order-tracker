@@ -43,7 +43,7 @@
 <body class="dark min-h-screen transition-colors duration-300">
 
 <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
-  <div class="flex items-center justify-between gap-3">
+  <div class="flex items-center justify-between">
     <h1 class="text-2xl sm:text-3xl font-bold">
       🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
     </h1>
@@ -54,7 +54,7 @@
 <main class="max-w-6xl mx-auto px-4 pb-20">
   <section id="summary" class="mt-6 hidden"></section>
   <section id="results" class="mt-4 space-y-4"></section>
-  <div id="loader" class="mt-10 flex gap-3 opacity-80 hidden">
+  <div id="loader" class="mt-10 flex items-center gap-3 opacity-80 hidden">
     <span class="ico-gear">⚙️</span> Loading…
   </div>
 </main>
@@ -63,7 +63,7 @@
 /* ===== CONFIG ===== */
 const API = 'https://script.google.com/macros/s/AKfycbzFljZhpwmAR-BANlmSYbtvCC36T0qyrbcMUGbQc8f4RBDi8jIIR39YJzaAZMS5dqBa/exec';
 
-/* ===== THEME (UNCHANGED) ===== */
+/* ===== THEME ===== */
 const body=document.body, btn=document.getElementById('themeToggle');
 function applyTheme(t){
   body.classList.remove('dark','light'); body.classList.add(t);
@@ -77,7 +77,7 @@ applyTheme(localStorage.getItem('theme')||'dark');
 btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
 
 /* ===== PARTY ===== */
-const partyKey=new URLSearchParams(location.search).get('party')||'';
+const partyKey = new URLSearchParams(location.search).get('party') || '';
 
 /* ===== HELPERS ===== */
 function fmtDate(v){
@@ -89,10 +89,10 @@ function fmtDate(v){
 
 function statusMeta(s){
   s=(s||'').toUpperCase();
-  if(s==='READY') return {l:'READY',c:'st-ready',i:'ico-check'};
-  if(s==='DELAYED') return {l:'DELAYED',c:'st-delayed',i:'ico-clock'};
-  if(s==='DISPATCHED') return {l:'DISPATCHED',c:'st-dispatched',i:'ico-truck'};
-  return {l:'IN PROCESS',c:'st-process',i:'ico-gear'};
+  if(s==='READY') return {l:'READY',c:'st-ready'};
+  if(s==='DELAYED') return {l:'DELAYED',c:'st-delayed'};
+  if(s==='DISPATCHED') return {l:'DISPATCHED',c:'st-dispatched'};
+  return {l:'IN PROCESS',c:'st-process'};
 }
 
 function groupByPI(rows){
@@ -105,18 +105,17 @@ function groupByPI(rows){
 
 /* ===== LOAD ===== */
 async function load(){
-  document.getElementById('loader').classList.remove('hidden');
+  loader.classList.remove('hidden');
   const u=new URL(API); u.searchParams.set('party',partyKey);
   const j=await (await fetch(u)).json();
   render(j.data||[]);
-  document.getElementById('loader').classList.add('hidden');
+  loader.classList.add('hidden');
 }
 
-/* ===== RENDER (ONLY MODIFIED PART) ===== */
+/* ===== RENDER (ONLY LOGIC CHANGE HERE) ===== */
 function render(rows){
   const groups=groupByPI(rows);
-  results.innerHTML=Object.keys(groups).map(pi=>{
-    return `
+  results.innerHTML=Object.keys(groups).map(pi=>`
     <div class="glass dark rounded-3xl overflow-hidden fade-in">
       <div class="p-5 border-b border-white/10 font-bold text-lg">PI: ${pi}</div>
       <div class="divide-y border-white/10">
@@ -127,16 +126,20 @@ function render(rows){
             <div class="col-span-5">
               <div class="font-semibold text-[15px] sm:text-base">${r.Item||'-'}</div>
               <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-              ${r.Expected_Delivery?`<div class="text-xs opacity-70 mt-1">Expected: ${fmtDate(r.Expected_Delivery)}</div>`:''}
+              ${r.Expected_Delivery ? `
+                <div class="text-xs opacity-70 mt-1">
+                  Expected: ${fmtDate(r.Expected_Delivery)}
+                </div>` : ''}
             </div>
             <div class="col-span-3 text-sm">${fmtDate(r.Date)}</div>
             <div class="col-span-2 text-sm">${r.Qty||'-'}</div>
-            <div class="col-span-2"><span class="chip ${m.c}">${m.l}</span></div>
+            <div class="col-span-2">
+              <span class="chip ${m.c}">${m.l}</span>
+            </div>
           </div>`;
         }).join('')}
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
 load();
