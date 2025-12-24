@@ -43,8 +43,8 @@
 <body class="dark min-h-screen transition-colors duration-300">
 
 <header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl sm:text-3xl font-bold">
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
       🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
     </h1>
     <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">🌙 Dark</button>
@@ -55,7 +55,10 @@
   <section id="summary" class="mt-6 hidden"></section>
   <section id="results" class="mt-4 space-y-4"></section>
   <div id="loader" class="mt-10 flex items-center gap-3 opacity-80 hidden">
-    <span class="ico-gear">⚙️</span> Loading…
+    <svg class="ico-gear" width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 8.5a3.5 3.5 0 1 1 0 7" stroke="currentColor" stroke-width="1.8"/>
+    </svg>
+    Loading…
   </div>
 </main>
 
@@ -76,8 +79,8 @@ function applyTheme(t){
 applyTheme(localStorage.getItem('theme')||'dark');
 btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
 
-/* ===== PARTY ===== */
-const partyKey = new URLSearchParams(location.search).get('party') || '';
+/* ===== PARTY KEY ===== */
+const partyKey = (new URLSearchParams(location.search).get('party')||'').trim().toUpperCase();
 
 /* ===== HELPERS ===== */
 function fmtDate(v){
@@ -89,10 +92,10 @@ function fmtDate(v){
 
 function statusMeta(s){
   s=(s||'').toUpperCase();
-  if(s==='READY') return {l:'READY',c:'st-ready'};
-  if(s==='DELAYED') return {l:'DELAYED',c:'st-delayed'};
-  if(s==='DISPATCHED') return {l:'DISPATCHED',c:'st-dispatched'};
-  return {l:'IN PROCESS',c:'st-process'};
+  if(s==='READY') return {label:'READY', chip:'st-ready'};
+  if(s==='DELAYED') return {label:'DELAYED', chip:'st-delayed'};
+  if(s==='DISPATCHED') return {label:'DISPATCHED', chip:'st-dispatched'};
+  return {label:'IN PROCESS', chip:'st-process'};
 }
 
 function groupByPI(rows){
@@ -112,10 +115,11 @@ async function load(){
   loader.classList.add('hidden');
 }
 
-/* ===== RENDER (ONLY LOGIC CHANGE HERE) ===== */
+/* ===== RENDER (FIXED LOGIC) ===== */
 function render(rows){
   const groups=groupByPI(rows);
-  results.innerHTML=Object.keys(groups).map(pi=>`
+  results.innerHTML = Object.keys(groups).map(pi=>{
+    return `
     <div class="glass dark rounded-3xl overflow-hidden fade-in">
       <div class="p-5 border-b border-white/10 font-bold text-lg">PI: ${pi}</div>
       <div class="divide-y border-white/10">
@@ -134,12 +138,13 @@ function render(rows){
             <div class="col-span-3 text-sm">${fmtDate(r.Date)}</div>
             <div class="col-span-2 text-sm">${r.Qty||'-'}</div>
             <div class="col-span-2">
-              <span class="chip ${m.c}">${m.l}</span>
+              <span class="chip ${m.chip}">${m.label}</span>
             </div>
           </div>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 load();
