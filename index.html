@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
-  /* ===== ORIGINAL STYLES (UNCHANGED) ===== */
   body.dark{
     background:
       radial-gradient(1200px 600px at 10% -10%, #7dd3fc44, transparent),
@@ -15,87 +14,82 @@
       linear-gradient(180deg,#0b1220,#0b1220 40%,#0e1426 100%);
     color:#e2e8f0;
   }
-  body.light{ background:#f7fbff; color:#0f172a; }
 
-  .glass.dark{ backdrop-filter: blur(12px); background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14); }
-  .glass.light{ background:#ffffffee; backdrop-filter: blur(10px); border:1px solid #e2e8f0; box-shadow:0 10px 25px rgba(2,132,199,.06); }
+  .glass{
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.14);
+  }
 
-  .chip{ padding:.22rem .65rem; border-radius:9999px; font-weight:700; font-size:.72rem }
-  .st-process{ background:#1d4ed8; color:#e5f2ff; }
-  .st-ready{ background:#34d399; color:#052e18; }
-  .st-delayed{ background:#fca5a5; color:#3b0a0a; }
-  .st-dispatched{ background:#93c5fd; color:#081225; }
+  .chip{ padding:.25rem .65rem; border-radius:9999px; font-size:.72rem; font-weight:700 }
+  .st-process{ background:#1d4ed8; color:#e5f2ff }
+  .st-ready{ background:#34d399; color:#052e18 }
+  .st-delayed{ background:#fca5a5; color:#3b0a0a }
+  .st-dispatched{ background:#93c5fd; color:#081225 }
 
-  @keyframes spin{ to{ transform:rotate(360deg);} }
-  @keyframes pulse{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
-  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
-  @keyframes drive{ 0%{transform:translateX(-14px);} 100%{transform:translateX(14px);} }
-  @keyframes fadeSlide{ from{opacity:0; transform:translateY(10px);} to{opacity:1;} }
+  @keyframes spin{ to{ transform:rotate(360deg)} }
+  @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  @keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  @keyframes drive{ 0%{transform:translateX(-10px)} 100%{transform:translateX(10px)} }
 
-  .ico-gear{ animation: spin 1.4s linear infinite; }
-  .ico-check{ animation: pulse 1.6s ease-in-out infinite; }
-  .ico-clock{ animation: shake 1.2s ease-in-out infinite; }
-  .ico-truck{ animation: drive 1.2s ease-in-out infinite alternate; }
-  .fade-in{ animation: fadeSlide .45s ease both; }
+  .ico-gear{ animation: spin 1.4s linear infinite }
+  .ico-check{ animation: pulse 1.6s ease-in-out infinite }
+  .ico-clock{ animation: shake 1.2s ease-in-out infinite }
+  .ico-truck{ animation: drive 1.2s ease-in-out infinite alternate }
 </style>
 </head>
 
-<body class="dark min-h-screen transition-colors duration-300">
+<body class="dark min-h-screen">
 
-<header class="max-w-6xl mx-auto px-4 pt-10 pb-6">
-  <div class="flex items-center justify-between gap-3">
-    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">
-      🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
-    </h1>
-    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">🌙 Dark</button>
-  </div>
-</header>
+<main class="max-w-6xl mx-auto px-4 py-10 space-y-6">
 
-<main class="max-w-6xl mx-auto px-4 pb-20">
-  <section id="summary" class="mt-6 hidden"></section>
-  <section id="results" class="mt-4 space-y-4"></section>
-  <div id="loader" class="mt-10 flex items-center gap-3 opacity-80 hidden">
-    <svg class="ico-gear" width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M12 8.5a3.5 3.5 0 1 1 0 7" stroke="currentColor" stroke-width="1.8"/>
-    </svg>
-    Loading…
+<!-- FILTERS -->
+<section class="glass rounded-3xl p-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
+  <div>
+    <label class="text-xs opacity-70">PI No</label>
+    <select id="fPI" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20"></select>
   </div>
+
+  <div>
+    <label class="text-xs opacity-70">From Date</label>
+    <input type="date" id="fFrom" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20">
+  </div>
+
+  <div>
+    <label class="text-xs opacity-70">To Date</label>
+    <input type="date" id="fTo" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20">
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="space-y-4"></section>
+
 </main>
 
 <script>
-/* ===== CONFIG ===== */
 const API = 'https://script.google.com/macros/s/AKfycbzFljZhpwmAR-BANlmSYbtvCC36T0qyrbcMUGbQc8f4RBDi8jIIR39YJzaAZMS5dqBa/exec';
+const partyKey = new URLSearchParams(location.search).get('party');
 
-/* ===== THEME ===== */
-const body=document.body, btn=document.getElementById('themeToggle');
-function applyTheme(t){
-  body.classList.remove('dark','light'); body.classList.add(t);
-  document.querySelectorAll('.glass').forEach(el=>{
-    el.classList.remove('dark','light'); el.classList.add(t);
-  });
-  btn.textContent = t==='dark'?'🌙 Dark':'☀️ Light';
-  localStorage.setItem('theme',t);
-}
-applyTheme(localStorage.getItem('theme')||'dark');
-btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
+const fPI = document.getElementById('fPI');
+const fFrom = document.getElementById('fFrom');
+const fTo = document.getElementById('fTo');
+const results = document.getElementById('results');
 
-/* ===== PARTY KEY ===== */
-const partyKey = (new URLSearchParams(location.search).get('party')||'').trim().toUpperCase();
+let master = [];
 
-/* ===== HELPERS ===== */
 function fmtDate(v){
-  if(!v) return '';
-  const d=new Date(v);
+  if(!v) return '-';
+  const d = new Date(v);
   if(isNaN(d)) return v;
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
 }
 
 function statusMeta(s){
-  s=(s||'').toUpperCase();
-  if(s==='READY') return {label:'READY', chip:'st-ready'};
-  if(s==='DELAYED') return {label:'DELAYED', chip:'st-delayed'};
-  if(s==='DISPATCHED') return {label:'DISPATCHED', chip:'st-dispatched'};
-  return {label:'IN PROCESS', chip:'st-process'};
+  s = (s||'').toUpperCase();
+  if(s==='READY') return {t:'READY',c:'st-ready',i:'ico-check'};
+  if(s==='DELAYED') return {t:'DELAYED',c:'st-delayed',i:'ico-clock'};
+  if(s==='DISPATCHED') return {t:'DISPATCHED',c:'st-dispatched',i:'ico-truck'};
+  return {t:'IN PROCESS',c:'st-process',i:'ico-gear'};
 }
 
 function groupByPI(rows){
@@ -106,48 +100,70 @@ function groupByPI(rows){
   return m;
 }
 
-/* ===== LOAD ===== */
-async function load(){
-  loader.classList.remove('hidden');
-  const u=new URL(API); u.searchParams.set('party',partyKey);
-  const j=await (await fetch(u)).json();
-  render(j.data||[]);
-  loader.classList.add('hidden');
+function buildPI(rows){
+  const pis = [...new Set(rows.map(r=>r.PI_No).filter(Boolean))];
+  fPI.innerHTML = `<option value="">All</option>` +
+    pis.map(p=>`<option>${p}</option>`).join('');
 }
 
-/* ===== RENDER (FIXED LOGIC) ===== */
+function applyFilters(){
+  let rows = master.slice();
+
+  if(fPI.value) rows = rows.filter(r=>r.PI_No===fPI.value);
+
+  if(fFrom.value || fTo.value){
+    rows = rows.filter(r=>{
+      const d = new Date(r.Date);
+      if(fFrom.value && d < new Date(fFrom.value)) return false;
+      if(fTo.value && d > new Date(fTo.value)) return false;
+      return true;
+    });
+  }
+
+  render(rows);
+}
+
 function render(rows){
-  const groups=groupByPI(rows);
-  results.innerHTML = Object.keys(groups).map(pi=>{
-    return `
-    <div class="glass dark rounded-3xl overflow-hidden fade-in">
-      <div class="p-5 border-b border-white/10 font-bold text-lg">PI: ${pi}</div>
+  const groups = groupByPI(rows);
+  results.innerHTML = Object.keys(groups).map(pi=>`
+    <div class="glass rounded-3xl overflow-hidden">
+      <div class="p-4 border-b border-white/10 font-bold text-lg">PI: ${pi}</div>
       <div class="divide-y border-white/10">
         ${groups[pi].map(r=>{
-          const m=statusMeta(r.Status);
+          const m = statusMeta(r.Status);
           return `
           <div class="grid grid-cols-12 gap-2 px-4 py-4 items-center">
             <div class="col-span-5">
-              <div class="font-semibold text-[15px] sm:text-base">${r.Item||'-'}</div>
+              <div class="font-semibold">${r.Item||'-'}</div>
               <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-              ${r.Expected_Delivery ? `
-                <div class="text-xs opacity-70 mt-1">
-                  Expected: ${fmtDate(r.Expected_Delivery)}
-                </div>` : ''}
+              <div class="text-xs opacity-70 mt-1">Expected: ${fmtDate(r.Expected_Delivery)}</div>
             </div>
-            <div class="col-span-3 text-sm">${fmtDate(r.Date)}</div>
-            <div class="col-span-2 text-sm">${r.Qty||'-'}</div>
-            <div class="col-span-2">
-              <span class="chip ${m.chip}">${m.label}</span>
+            <div class="col-span-3">${fmtDate(r.Date)}</div>
+            <div class="col-span-2">${r.Qty||'-'}</div>
+            <div class="col-span-2 flex items-center gap-2">
+              <div class="${m.i}">⚙️</div>
+              <span class="chip ${m.c}">${m.t}</span>
             </div>
           </div>`;
         }).join('')}
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  `).join('');
 }
+
+async function load(){
+  const u = new URL(API);
+  u.searchParams.set('party', partyKey);
+  const j = await (await fetch(u)).json();
+  master = j.data || [];
+  buildPI(master);
+  applyFilters();
+}
+
+[fPI,fFrom,fTo].forEach(el=>el.addEventListener('change',applyFilters));
 
 load();
 </script>
+
 </body>
 </html>
