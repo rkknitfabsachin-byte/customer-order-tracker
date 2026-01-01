@@ -23,40 +23,49 @@ body.light{ background:#f7fbff; color:#0f172a; }
 /* ===== STATUS CHIPS ===== */
 .chip{ padding:.25rem .7rem; border-radius:9999px; font-weight:700; font-size:.72rem }
 .st-process{ background:#2563eb; color:#e5f2ff }
-.st-ready{ background:#FFFF00; color:#052e18 }
-.st-delayed{ background:#E74C3C; color:#3b0a0a }
-.st-dispatched{ background:#43A047; color:#081225 }
+.st-getting{ background:#38bdf8; color:#04293a }
+.st-ready{ background:#facc15; color:#422006 }
+.st-delayed{ background:#ef4444; color:#3b0a0a }
+.st-dispatched{ background:#22c55e; color:#052e18 }
 
 /* ===== ANIMATIONS ===== */
 @keyframes spin{ to{ transform:rotate(360deg)} }
 @keyframes pulse{ 0%,100%{transform:scale(1)}50%{transform:scale(1.08)} }
 @keyframes shake{ 0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)} }
 @keyframes drive{ 0%{transform:translateX(-12px)}100%{transform:translateX(12px)} }
+@keyframes glow{ 0%,100%{box-shadow:0 0 0px #38bdf8}50%{box-shadow:0 0 12px #38bdf8} }
 
 .ico-gear{ animation:spin 1.4s linear infinite }
 .ico-check{ animation:pulse 1.6s ease-in-out infinite }
 .ico-clock{ animation:shake 1.2s ease-in-out infinite }
 .ico-truck{ animation:drive 1.2s ease-in-out infinite alternate }
+.ico-ready{ animation:glow 1.6s ease-in-out infinite }
 </style>
 </head>
 
 <body class="dark min-h-screen transition-colors duration-300">
 
-<!-- ===== HEADER ===== -->
 <header class="max-w-6xl mx-auto px-4 pt-8 pb-6">
   <div class="flex items-center justify-between">
-    <h1 class="text-2xl sm:text-3xl font-bold">
-      🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
-    </h1>
-    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">
-      🌙 Dark
-    </button>
+    <h1 class="text-2xl sm:text-3xl font-bold">🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span></h1>
+    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">🌙 Dark</button>
   </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 pb-20 space-y-6">
 
-<!-- ===== FILTERS ===== -->
+<!-- ===== PROCESS LEGEND ===== -->
+<section class="glass dark rounded-3xl p-5">
+  <h3 class="font-bold mb-3">Order Process Guide</h3>
+  <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-sm">
+    <div class="flex items-center gap-2"><span class="chip st-process">IN PROCESS</span><span class="opacity-70">Processing started</span></div>
+    <div class="flex items-center gap-2"><span class="chip st-getting">GETTING READY</span><span class="opacity-70">Almost prepared</span></div>
+    <div class="flex items-center gap-2"><span class="chip st-ready">READY</span><span class="opacity-70">Ready for dispatch</span></div>
+    <div class="flex items-center gap-2"><span class="chip st-dispatched">DISPATCHED</span><span class="opacity-70">Shipped to customer</span></div>
+    <div class="flex items-center gap-2"><span class="chip st-delayed">PENDING</span><span class="opacity-70">Delayed / on hold</span></div>
+  </div>
+</section>
+
 <section class="glass dark rounded-3xl p-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
   <div>
     <label class="text-xs opacity-70">PI No</label>
@@ -72,131 +81,72 @@ body.light{ background:#f7fbff; color:#0f172a; }
   </div>
 </section>
 
-<!-- ===== RESULTS ===== -->
 <section id="results" class="space-y-4"></section>
-
 </main>
 
 <script>
-/* ===== CONFIG ===== */
 const API = 'https://script.google.com/macros/s/AKfycbzFljZhpwmAR-BANlmSYbtvCC36T0qyrbcMUGbQc8f4RBDi8jIIR39YJzaAZMS5dqBa/exec';
 const partyKey = new URLSearchParams(location.search).get('party');
 
-/* ===== THEME ===== */
 const body=document.body, btn=document.getElementById('themeToggle');
 function applyTheme(t){
   body.classList.remove('dark','light'); body.classList.add(t);
-  document.querySelectorAll('.glass').forEach(el=>{
-    el.classList.remove('dark','light'); el.classList.add(t);
-  });
+  document.querySelectorAll('.glass').forEach(el=>{el.classList.remove('dark','light'); el.classList.add(t);});
   btn.textContent = t==='dark'?'🌙 Dark':'☀️ Light';
   localStorage.setItem('theme',t);
 }
 applyTheme(localStorage.getItem('theme')||'dark');
 btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
 
-/* ===== HELPERS ===== */
-function fmtDate(v){
-  if(!v) return '-';
-  const d=new Date(v);
-  if(isNaN(d)) return v;
-  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
-}
+function fmtDate(v){ if(!v) return '-'; const d=new Date(v); if(isNaN(d)) return v; return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`; }
 
 function statusMeta(s){
   s=(s||'').toUpperCase();
   if(s==='READY') return {t:'READY',c:'st-ready',i:'ico-check'};
+  if(s==='GETTING READY') return {t:'GETTING READY',c:'st-getting',i:'ico-ready'};
   if(s==='PENDING') return {t:'PENDING',c:'st-delayed',i:'ico-clock'};
   if(s==='DISPATCHED') return {t:'DISPATCHED',c:'st-dispatched',i:'ico-truck'};
   return {t:'IN PROCESS',c:'st-process',i:'ico-gear'};
 }
 
-function groupByPI(rows){
-  const m={};
-  rows.forEach(r=>{
-    (m[r.PI_No||'NO-PI']=m[r.PI_No||'NO-PI']||[]).push(r);
-  });
-  return m;
-}
+function groupByPI(rows){ const m={}; rows.forEach(r=>{ (m[r.PI_No||'NO-PI']=m[r.PI_No||'NO-PI']||[]).push(r); }); return m; }
 
-/* ===== FILTERS ===== */
-const fPI=document.getElementById('fPI'),
-      fFrom=document.getElementById('fFrom'),
-      fTo=document.getElementById('fTo'),
-      results=document.getElementById('results');
+const fPI=document.getElementById('fPI'), fFrom=document.getElementById('fFrom'), fTo=document.getElementById('fTo'), results=document.getElementById('results');
 let master=[];
 
-function buildPI(rows){
-  const pis=[...new Set(rows.map(r=>r.PI_No).filter(Boolean))];
-  fPI.innerHTML=`<option value="">All</option>`+pis.map(p=>`<option>${p}</option>`).join('');
-}
+function buildPI(rows){ const pis=[...new Set(rows.map(r=>r.PI_No).filter(Boolean))]; fPI.innerHTML=`<option value="">All</option>`+pis.map(p=>`<option>${p}</option>`).join(''); }
 
-function applyFilters(){
-  let rows=master.slice();
-  if(fPI.value) rows=rows.filter(r=>r.PI_No===fPI.value);
-  if(fFrom.value||fTo.value){
-    rows=rows.filter(r=>{
-      const d=new Date(r.Date);
-      if(fFrom.value && d<new Date(fFrom.value)) return false;
-      if(fTo.value && d>new Date(fTo.value)) return false;
-      return true;
-    });
-  }
-  render(rows);
-}
+function applyFilters(){ let rows=master.slice(); if(fPI.value) rows=rows.filter(r=>r.PI_No===fPI.value); if(fFrom.value||fTo.value){ rows=rows.filter(r=>{ const d=new Date(r.Date); if(fFrom.value && d<new Date(fFrom.value)) return false; if(fTo.value && d>new Date(fTo.value)) return false; return true; }); } render(rows); }
 
-/* ===== RENDER ===== */
-function render(rows){
-  const groups=groupByPI(rows);
-  results.innerHTML=Object.keys(groups).map(pi=>`
-    <div class="glass dark rounded-3xl overflow-hidden">
-      <div class="p-4 border-b border-white/10 font-bold">PI: ${pi}</div>
+function render(rows){ const groups=groupByPI(rows); results.innerHTML=Object.keys(groups).map(pi=>`
+  <div class="glass dark rounded-3xl overflow-hidden">
+    <div class="p-4 border-b border-white/10 font-bold">PI: ${pi}</div>
+    <div class="grid grid-cols-12 px-4 py-2 text-xs uppercase tracking-wider opacity-60 border-b border-white/10">
+      <div class="col-span-5">Item</div>
+      <div class="col-span-3 text-center">Ordered Date</div>
+      <div class="col-span-2 text-center">Qty</div>
+      <div class="col-span-2 text-center">Status</div>
+    </div>
+    <div class="divide-y border-white/10">
+      ${groups[pi].map(r=>{ const m=statusMeta(r.Status); return `
+      <div class="grid grid-cols-12 gap-2 px-4 py-4 items-center">
+        <div class="col-span-5">
+          <div class="font-semibold">${r.Item||'-'}</div>
+          <div class="text-sm opacity-70">${r.Colour||'-'}</div>
+          <div class="text-xs opacity-70 mt-1">Expected delivery: ${fmtDate(r.Expected_Delivery)}</div>
+        </div>
+        <div class="col-span-3 text-center">${fmtDate(r.Date)}</div>
+        <div class="col-span-2 text-center">${r.Qty||'-'}</div>
+        <div class="col-span-2 flex items-center justify-center gap-2">
+          <div class="${m.i}">${m.i==='ico-gear'?'⚙️':m.i==='ico-check'?'✔️':m.i==='ico-clock'?'⏰':m.i==='ico-ready'?'🔵':'🚚'}</div>
+          <span class="chip ${m.c}">${m.t}</span>
+        </div>
+      </div>`; }).join('')}
+    </div>
+  </div>`).join(''); }
 
-      <!-- COLUMN HEADINGS -->
-      <div class="grid grid-cols-12 px-4 py-2 text-xs uppercase tracking-wider opacity-60 border-b border-white/10">
-        <div class="col-span-5">Item</div>
-        <div class="col-span-3 text-center">Ordered Date</div>
-        <div class="col-span-2 text-center">Qty</div>
-        <div class="col-span-2 text-center">Status</div>
-      </div>
-
-      <div class="divide-y border-white/10">
-        ${groups[pi].map(r=>{
-          const m=statusMeta(r.Status);
-          return `
-          <div class="grid grid-cols-12 gap-2 px-4 py-4 items-center">
-            <div class="col-span-5">
-              <div class="font-semibold">${r.Item||'-'}</div>
-              <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-              <div class="text-xs opacity-70 mt-1">
-                Expected delivery: ${fmtDate(r.Expected_Delivery)}
-              </div>
-            </div>
-            <div class="col-span-3 text-center">${fmtDate(r.Date)}</div>
-            <div class="col-span-2 text-center">${r.Qty||'-'}</div>
-            <div class="col-span-2 flex items-center justify-center gap-2">
-              <div class="${m.i}">
-                ${m.i==='ico-gear'?'⚙️':m.i==='ico-check'?'✔️':m.i==='ico-clock'?'⏰':'🚚'}
-              </div>
-              <span class="chip ${m.c}">${m.t}</span>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`).join('');
-}
-
-/* ===== LOAD ===== */
-async function load(){
-  const u=new URL(API); u.searchParams.set('party',partyKey);
-  const j=await (await fetch(u)).json();
-  master=j.data||[];
-  buildPI(master);
-  applyFilters();
-}
-[fPI,fFrom,fTo].forEach(el=>el.addEventListener('change',applyFilters));
-load();
+async function load(){ const u=new URL(API); u.searchParams.set('party',partyKey); const j=await (await fetch(u)).json(); master=j.data||[]; buildPI(master); applyFilters(); }
+[fPI,fFrom,fTo].forEach(el=>el.addEventListener('change',applyFilters)); load();
 </script>
-
 </body>
 </html>
