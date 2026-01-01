@@ -106,7 +106,7 @@ function fmtDate(v){
 function statusMeta(s){
   s=(s||'').toUpperCase();
   if(s==='READY') return {t:'READY',c:'st-ready',i:'ico-check'};
-  if(s==='DELAYED') return {t:'DELAYED',c:'st-delayed',i:'ico-clock'};
+  if(s==='PENDING') return {t:'PENDING',c:'st-delayed',i:'ico-clock'};
   if(s==='DISPATCHED') return {t:'DISPATCHED',c:'st-dispatched',i:'ico-truck'};
   return {t:'IN PROCESS',c:'st-process',i:'ico-gear'};
 }
