@@ -176,6 +176,10 @@ function render(rows){
       <!-- COLUMN HEADERS -->
       <div class="grid grid-cols-12 px-4 py-2 text-[10px] uppercase tracking-wide opacity-60 border-b border-white/10">
         <div class="col-span-4">Item</div>
+        <div class="col-span-4 text-center leading-tight">Ordered → Expected</div>
+        <div class="col-span-2 text-center">Qty</div>
+        <div class="col-span-2 text-center">Status</div>
+      </div>
         <div class="col-span-2 text-center leading-tight">
           Ordered<br>Date
         </div>
@@ -195,8 +199,11 @@ function render(rows){
               <div class="font-semibold mobile-tight break-words line-clamp-2">${r.Item || '-'}</div>
               <div class="text-sm opacity-70 mobile-secondary">${r.Colour || '-'}</div>
             </div>
-            <div class="col-span-2 text-center mobile-tight">${fmtDate(r['Order Date'])}</div>
-            <div class="col-span-2 text-center mobile-tight">${fmtDate(r.Expected_Delivery)}</div>
+            <div class="col-span-4 text-center mobile-tight">
+              <span>${fmtDate(r['Order Date'])}</span>
+              <span class="mx-1 opacity-60">→</span>
+              <span>${fmtDate(r.Expected_Delivery)}</span>
+            </div>
             <div class="col-span-2 text-center font-semibold mobile-tight">${r.Qty || '-'}</div>
             <div class="col-span-2 flex flex-col items-center gap-1 flex-wrap">
               <div class="flex items-center gap-2">
