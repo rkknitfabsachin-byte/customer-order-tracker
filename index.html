@@ -53,25 +53,93 @@ body.light{ background:#f7fbff; color:#0f172a; }
 </style>
 </head>
 
-<body class="dark min-h-screen">
+<body class="dark min-h-screen transition-colors duration-300">
 
 <header class="max-w-6xl mx-auto px-4 pt-8 pb-6">
   <div class="flex items-center justify-between">
     <h1 class="text-2xl sm:text-3xl font-bold">
       🧵 RK KNIT FAB — <span class="text-sky-300">Order Tracker</span>
     </h1>
+    <button id="themeToggle" class="px-4 py-2 rounded-xl glass dark text-sm">
+      🌙 Dark
+    </button>
   </div>
 </header>
 
 <main class="max-w-6xl mx-auto px-4 pb-20 space-y-6">
 
-<section id="results" class="space-y-4"></section>
+<!-- ===== PROCESS LEGEND ===== -->
+<section class="glass dark rounded-3xl p-5">
+  <h3 class="font-bold mb-3">Order Process Guide</h3>
+  <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-sm">
+    <div class="flex items-center gap-2">
+      <span class="chip st-process">IN PROCESS</span>
+      <span class="opacity-70">Order is under production</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="chip st-getting">GETTING READY</span>
+      <span class="opacity-70">Final checks & packing stage</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="chip st-ready">READY</span>
+      <span class="opacity-70">Ready for dispatch</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="chip st-dispatched">DISPATCHED</span>
+      <span class="opacity-70">Shipped to customer</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="chip st-pipeline">IN PIPELINE</span>
+      <span class="opacity-70">Queued / awaiting next process</span>
+    </div>
+  </div>
+</section>
 
+<!-- ===== FILTERS ===== -->
+<section class="glass dark rounded-3xl p-5 grid grid-cols-1 sm:grid-cols-5 gap-4">
+  <div>
+    <label class="text-xs opacity-70">PI No</label>
+    <select id="fPI" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20"></select>
+  </div>
+  <div>
+    <label class="text-xs opacity-70">Status</label>
+    <select id="fStatus" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20">
+      <option value="">All</option>
+      <option>IN PROCESS</option>
+      <option>GETTING READY</option>
+      <option>READY</option>
+      <option>DISPATCHED</option>
+      <option>IN PIPELINE</option>
+    </select>
+  </div>
+  <div>
+    <label class="text-xs opacity-70">From Date</label>
+    <input type="date" id="fFrom" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20">
+  </div>
+  <div>
+    <label class="text-xs opacity-70">To Date</label>
+    <input type="date" id="fTo" class="w-full mt-1 rounded-xl px-3 py-2 bg-black/20">
+  </div>
+</section>
+
+<section id="results" class="space-y-4"></section>
 </main>
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbzFljZhpwmAR-BANlmSYbtvCC36T0qyrbcMUGbQc8f4RBDi8jIIR39YJzaAZMS5dqBa/exec';
 const partyKey = new URLSearchParams(location.search).get('party');
+
+const body=document.body, btn=document.getElementById('themeToggle');
+function applyTheme(t){
+  body.classList.remove('dark','light'); body.classList.add(t);
+  document.querySelectorAll('.glass').forEach(el=>{
+    el.classList.remove('dark','light'); el.classList.add(t);
+  });
+  btn.textContent = t==='dark'?'🌙 Dark':'☀️ Light';
+  localStorage.setItem('theme',t);
+}
+applyTheme(localStorage.getItem('theme')||'dark');
+btn.onclick=()=>applyTheme(body.classList.contains('dark')?'light':'dark');
 
 function fmtDate(v){
   if(!v) return '-';
@@ -97,19 +165,43 @@ function groupByPI(rows){
   return m;
 }
 
-async function load(){
-  const u=new URL(API);
-  u.searchParams.set('party', partyKey || 'PREVIEW');
-  const j=await (await fetch(u)).json();
-  render(j.data||[]);
+const fPI=document.getElementById('fPI'),
+      fStatus=document.getElementById('fStatus'),
+      fFrom=document.getElementById('fFrom'),
+      fTo=document.getElementById('fTo'),
+      results=document.getElementById('results');
+
+let master=[];
+
+function buildPI(rows){
+  const pis=[...new Set(rows.map(r=>r.PI_No).filter(Boolean))];
+  fPI.innerHTML=`<option value="">All</option>`+pis.map(p=>`<option>${p}</option>`).join('');
+}
+
+function applyFilters(){
+  let rows=master.slice();
+  if(fPI.value) rows=rows.filter(r=>r.PI_No===fPI.value);
+  if(fStatus.value){
+    rows=rows.filter(r=>{
+      const s=(r.Status||'').toUpperCase();
+      return fStatus.value==='IN PIPELINE' ? s==='PENDING' : s===fStatus.value;
+    });
+  }
+  if(fFrom.value||fTo.value){
+    rows=rows.filter(r=>{
+      const d=new Date(r['Order Date']);
+      if(fFrom.value && d<new Date(fFrom.value)) return false;
+      if(fTo.value && d>new Date(fTo.value)) return false;
+      return true;
+    });
+  }
+  render(rows);
 }
 
 function render(rows){
   const groups=groupByPI(rows);
-  document.getElementById('results').innerHTML=
-    Object.keys(groups).map(pi=>`
+  results.innerHTML=Object.keys(groups).map(pi=>`
     <div class="glass dark rounded-3xl overflow-hidden">
-
       <div class="p-4 border-b border-white/10 font-bold">PI: ${pi}</div>
 
       <!-- DESKTOP -->
@@ -120,7 +212,6 @@ function render(rows){
           <div class="col-span-2 text-center">Qty</div>
           <div class="col-span-2 text-center">Status</div>
         </div>
-
         ${groups[pi].map(r=>{
           const m=statusMeta(r.Status);
           return `
@@ -168,10 +259,19 @@ function render(rows){
           </div>`;
         }).join('')}
       </div>
-
     </div>`).join('');
 }
 
+async function load(){
+  const u=new URL(API);
+  u.searchParams.set('party', partyKey || 'PREVIEW');
+  const j=await (await fetch(u)).json();
+  master=j.data||[];
+  buildPI(master);
+  applyFilters();
+}
+
+[fPI,fStatus,fFrom,fTo].forEach(el=>el.addEventListener('change',applyFilters));
 load();
 </script>
 </body>
