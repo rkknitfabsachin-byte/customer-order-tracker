@@ -206,30 +206,47 @@ function render(rows){
 
       <!-- DESKTOP -->
       <div class="hidden sm:block">
-        <div class="grid grid-cols-12 px-4 py-2 text-xs uppercase opacity-60 border-b border-white/10">
-          <div class="col-span-4">Item</div>
-          <div class="col-span-4 text-center">Ordered → Expected</div>
-          <div class="col-span-2 text-center">Qty</div>
-          <div class="col-span-2 text-center">Status</div>
-        </div>
-        ${groups[pi].map(r=>{
-          const m=statusMeta(r.Status);
-          return `
-          <div class="grid grid-cols-12 px-4 py-4 border-b border-white/10 last:border-b-0">
-            <div class="col-span-4">
-              <div class="font-semibold">${r.Item||'-'}</div>
-              <div class="text-sm opacity-70">${r.Colour||'-'}</div>
-            </div>
-            <div class="col-span-4 text-center">
-              ${fmtDate(r['Order Date'])} → ${fmtDate(r.Expected_Delivery)}
-            </div>
-            <div class="col-span-2 text-center font-semibold">${r.Qty||'-'}</div>
-            <div class="col-span-2 text-center">
-              <span class="chip ${m.c}">${m.t}</span>
-            </div>
-          </div>`;
-        }).join('')}
+  <div class="grid grid-cols-12 px-4 py-2 text-xs uppercase opacity-60 border-b border-white/10">
+    <div class="col-span-4">Item</div>
+    <div class="col-span-4 text-center">Ordered → Expected</div>
+    <div class="col-span-2 text-center">Qty</div>
+    <div class="col-span-2 text-center">Status</div>
+  </div>
+
+  ${groups[pi].map(r=>{
+    const m = statusMeta(r.Status);
+    return `
+    <div class="grid grid-cols-12 px-4 py-4 border-b border-white/10 last:border-b-0">
+      
+      <!-- ITEM + COLOUR + REMARKS -->
+      <div class="col-span-4">
+        <div class="font-semibold">${r.Item || '-'}</div>
+        <div class="text-sm opacity-70">${r.Colour || '-'}</div>
+
+        ${r.Remarks && String(r.Remarks).trim() !== '' ? `
+          <div class="mt-1 text-xs opacity-60 border-l-2 border-white/20 pl-2">
+            📝 ${r.Remarks}
+          </div>` : ``}
       </div>
+
+      <!-- DATES -->
+      <div class="col-span-4 text-center">
+        ${fmtDate(r['Order Date'])} → ${fmtDate(r.Expected_Delivery)}
+      </div>
+
+      <!-- QTY -->
+      <div class="col-span-2 text-center font-semibold">
+        ${r.Qty || '-'}
+      </div>
+
+      <!-- STATUS -->
+      <div class="col-span-2 text-center">
+        <span class="chip ${m.c}">${m.t}</span>
+      </div>
+    </div>`;
+  }).join('')}
+</div>
+
 
       <!-- MOBILE -->
       <div class="sm:hidden divide-y divide-white/10">
